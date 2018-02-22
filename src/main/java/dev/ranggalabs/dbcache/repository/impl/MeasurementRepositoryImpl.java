@@ -1,6 +1,5 @@
 package dev.ranggalabs.dbcache.repository.impl;
 
-import dev.ranggalabs.dbcache.model.BaseType;
 import dev.ranggalabs.dbcache.model.Measurement;
 import dev.ranggalabs.dbcache.repository.MeasurementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +35,10 @@ public class MeasurementRepositoryImpl implements MeasurementRepository {
         }
         sql.append(":entranceDate,:driver,:itemTypeId,:vehicleTypeId,:carTypeId)");
 
+        String strSql = sql.toString();
         try (Connection conn = hsqldbSQL2O.beginTransaction();) {
             for (Measurement measurement : measurements) {
-                try (Query query = conn.createQuery(sql.toString());) {
+                try (Query query = conn.createQuery(strSql);) {
                     if (measurement.getId() != null) {
                         query.addParameter("id", measurement.getId());
                     }
@@ -57,7 +57,10 @@ public class MeasurementRepositoryImpl implements MeasurementRepository {
     }
 
     private List<Measurement> findAll(Connection conn) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM measurement");
+        StringBuilder sql = new StringBuilder("SELECT m.* FROM measurement m " +
+                "JOIN vehicle_type vt ON vt.id = m.vehicle_type_id " +
+                "JOIN item_type it ON it.id = m.item_type_id " +
+                "JOIN car_type ct ON ct.id = m.car_type_id");
         try (Query query = conn.createQuery(sql.toString())) {
             return query
                     .addColumnMapping("entrance_date", "entranceDate")
